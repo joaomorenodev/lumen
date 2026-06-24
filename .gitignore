@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Ambiente virtual
+.venv/
+
+# Segredos / variáveis de ambiente
+.env
+
+# Banco vetorial (gerado na ingestão, não é código)
+storage/
+
+# Sistema operacional
+Thumbs.db
+.DS_Store
