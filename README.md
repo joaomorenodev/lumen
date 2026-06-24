@@ -1,15 +1,15 @@
 # Lumen ✨
 
-Busca semântica inteligente em documentação técnica, com respostas
-contextualizadas. Em vez de devolver uma lista de links, o Lumen entende a
-pergunta, recupera os trechos relevantes da documentação e responde citando
-a fonte.
+Intelligent semantic search over technical documentation, with contextualized
+answers. Instead of returning a list of links, Lumen understands the question,
+retrieves the relevant passages from the documentation, and answers while
+citing the source.
 
-## Tecnologias
+## Technologies
 - Python
-- LangChain (orquestração do RAG)
-- Ollama (LLM e embeddings locais)
-- Chroma (banco vetorial)
+- LangChain (RAG orchestration)
+- Ollama (local LLM and embeddings)
+- Chroma (vector store)
 
 ## Status
-🚧 Em desenvolvimento.
+🚧 Under development.
