@@ -5,3 +5,6 @@ langchain-chroma
 chromadb
 langchain-text-splitters
 python-dotenv
+streamlit
+pypdf
+docx2txt

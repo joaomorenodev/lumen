@@ -1,22 +1,42 @@
 from pathlib import Path
 
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_chroma import Chroma
+from langchain_community.document_loaders import (
+    DirectoryLoader,
+    Docx2txtLoader,
+    PyPDFLoader,
+    TextLoader,
+)
+from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-DOCS_DIR = Path(__file__).resolve().parents[1] / "docs"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DOCS_DIR = PROJECT_ROOT / "docs"
+STORAGE_DIR = PROJECT_ROOT / "storage"
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120
+EMBEDDING_MODEL = "nomic-embed-text"
+
+
+# Each glob is paired with the loader that knows how to read that format.
+# Text formats need an explicit encoding; PDF/DOCX loaders handle bytes themselves.
+LOADERS = [
+    ("**/*.md", TextLoader, {"encoding": "utf-8"}),
+    ("**/*.txt", TextLoader, {"encoding": "utf-8"}),
+    ("**/*.pdf", PyPDFLoader, {}),
+    ("**/*.docx", Docx2txtLoader, {}),
+]
 
 
 def load_documents():
-    """Read every .md and .txt file inside the docs/ folder."""
+    """Read every supported file (.md, .txt, .pdf, .docx) inside docs/."""
     documents = []
-    for pattern in ["**/*.md", "**/*.txt"]:
+    for pattern, loader_cls, loader_kwargs in LOADERS:
         loader = DirectoryLoader(
             str(DOCS_DIR),
             glob=pattern,
-            loader_cls=TextLoader,
-            loader_kwargs={"encoding": "utf-8"},
+            loader_cls=loader_cls,
+            loader_kwargs=loader_kwargs,
         )
         documents.extend(loader.load())
     return documents
@@ -32,15 +52,29 @@ def split_documents(documents):
     return splitter.split_documents(documents)
 
 
-if __name__ == "__main__":
+def index_documents(chunks):
+    """Embed each chunk and persist it into the Chroma vector store."""
+    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    vector_store = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory=str(STORAGE_DIR),
+    )
+    return vector_store
+
+
+def run_ingest():
+    """Full offline pipeline: load docs, split into chunks, embed and index."""
     documents = load_documents()
     print(f"Loaded {len(documents)} document(s) from {DOCS_DIR}")
 
     chunks = split_documents(documents)
     print(f"Split into {len(chunks)} chunk(s)")
 
-    if chunks:
-        first = chunks[0]
-        print("\n--- First chunk preview ---")
-        print("Source:", first.metadata.get("source"))
-        print(first.page_content[:300])
+    print(f"\nIndexing {len(chunks)} chunk(s) into Chroma at {STORAGE_DIR} ...")
+    index_documents(chunks)
+    print("Done. Vector store persisted.")
+
+
+if __name__ == "__main__":
+    run_ingest()
